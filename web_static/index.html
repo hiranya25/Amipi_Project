@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jewelry Command Center</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"></div>
+      Jewelry command center
+    </div>
+    
+    <div class="setup-section">
+      <h3>1. Data Sources</h3>
+      <div class="dropzone" id="dz-inventory">
+        <div id="file-inventory" class="dropzone-file" style="display:none"></div>
+        <div class="dropzone-label" id="lbl-inventory">Drop inventory_sales.csv here<br>(or click to select)</div>
+        <input type="file" id="input-inventory" accept=".csv" style="display:none">
+      </div>
+      <div class="dropzone-error" id="err-inventory"></div>
+      
+      <div class="dropzone" id="dz-events">
+        <div id="file-events" class="dropzone-file" style="display:none"></div>
+        <div class="dropzone-label" id="lbl-events">Drop event_multipliers.csv here<br>(or click to select)</div>
+        <input type="file" id="input-events" accept=".csv" style="display:none">
+      </div>
+      <div class="dropzone-error" id="err-events"></div>
+    </div>
+
+    <div class="setup-section">
+      <h3>2. Event Target</h3>
+      <select id="event-selector" disabled>
+        <option value="">Upload events CSV first...</option>
+      </select>
+    </div>
+
+    <div class="setup-section">
+      <h3>3. Intelligence</h3>
+      <label class="toggle-row">
+        <span>Use AI reasoning (Groq)</span>
+        <input type="checkbox" id="ai-toggle" checked>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </label>
+    </div>
+
+    <button id="run-btn" class="btn-primary" disabled>Generate recommendations</button>
+  </div>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-sup">♦ Recommendations</div>
+        <h2><span id="event-title-display">Select an event</span> restocking</h2>
+      </div>
+      <div class="actions">
+        <button id="export-json-btn" class="btn-dark" disabled style="display:none">JSON</button>
+        <button id="export-csv-btn" class="btn-dark" disabled>Build order sheet</button>
+      </div>
+    </div>
+    
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-value red" id="kpi-high-val">0</div>
+        <div class="kpi-title">High priority</div>
+        <div class="kpi-desc">Reorder urgently</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-units-val">0</div>
+        <div class="kpi-title">Total units to order</div>
+        <div class="kpi-desc" id="kpi-units-desc">Across 0 SKUs</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value red" id="kpi-risk-val">0</div>
+        <div class="kpi-title">At risk of stockout</div>
+        <div class="kpi-desc">High priority, ≤2 on hand</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-total-val">0</div>
+        <div class="kpi-title">SKUs analyzed</div>
+        <div class="kpi-desc" id="kpi-total-desc">-</div>
+      </div>
+    </div>
+
+    <div class="filter-row" id="filter-row">
+      <div class="filter-item">All <span id="flt-all">0</span></div>
+      <div class="filter-item"><div class="dot High"></div> High <span id="flt-high">0</span></div>
+      <div class="filter-item"><div class="dot Medium"></div> Medium <span id="flt-med">0</span></div>
+      <div class="filter-item"><div class="dot Low"></div> Low <span id="flt-low">0</span></div>
+      <div class="filter-item"><div class="dot DNR"></div> DNR <span id="flt-dnr">0</span></div>
+    </div>
+
+    <div class="cards-grid" id="cards-grid">
+      <div style="color: var(--text-secondary); padding: 40px; grid-column: 1/-1; text-align: center;">Upload data to see recommendations...</div>
+    </div>
+  </div>
+
+  <div class="slideover" id="slideover">
+    <div class="slideover-header">
+      <div class="so-title-area">
+        <h2 id="so-style">Style Number</h2>
+        <div class="so-subtitle" id="so-sub">Event</div>
+      </div>
+      <button id="so-close" class="btn-close">&times;</button>
+    </div>
+    <div class="so-content">
+      <div class="so-section">
+        <h3>Recommendation</h3>
+        <div class="so-rec" id="so-rec">
+          <div class="dot High"></div> <span id="so-rec-text">HIGH — Reorder</span>
+        </div>
+      </div>
+      
+      <div class="so-section">
+        <h3>AI Reason</h3>
+        <div class="so-reason-box" id="so-reason">Reasoning text...</div>
+        <div class="so-template-note" id="so-template-note" style="display:none;">— Template reason (no Groq key provided)</div>
+      </div>
+
+      <div class="so-section">
+        <h3>Calculation Trace</h3>
+        <div class="calc-trace">
+          <div class="trace-item"><span class="trace-formula">available_inventory = current_stock + on_order</span><span class="trace-result" id="tr-avail">0</span></div>
+          <div class="trace-item"><span class="trace-formula">monthly_sales_rate = last_90_day_sales / 3</span><span class="trace-result" id="tr-monthly">0</span></div>
+          <div class="trace-item"><span class="trace-formula">projected_demand = monthly_sales_rate * (days / 30)</span><span class="trace-result" id="tr-proj">0</span></div>
+          <div class="trace-item"><span class="trace-formula">event_multiplier = event lookup</span><span class="trace-result" id="tr-mult">0x</span></div>
+          <div class="trace-item"><span class="trace-formula">recommended_stock_needed = projected_demand * event_multiplier</span><span class="trace-result" id="tr-needed">0</span></div>
+          <div class="trace-item"><span class="trace-formula">suggested_order_qty = max(0, round(rec_stock - avail))</span><span class="trace-result" id="tr-qty">0</span></div>
+        </div>
+      </div>
+
+      <div class="so-section">
+        <h3>Override Order Quantity</h3>
+        <div class="so-override">
+          <button class="qty-btn" onclick="document.getElementById('override-qty').textContent = Math.max(0, parseInt(document.getElementById('override-qty').textContent)-1)">-</button>
+          <div class="qty-val" id="override-qty">0</div>
+          <button class="qty-btn" onclick="document.getElementById('override-qty').textContent = parseInt(document.getElementById('override-qty').textContent)+1">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="so-footer">
+      <button class="btn-yellow" id="so-confirm">Confirm this order</button>
+      <button class="btn-dark" id="so-close-btn">Close</button>
+    </div>
+  </div>
+  
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

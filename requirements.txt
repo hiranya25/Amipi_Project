@@ -1,0 +1,7 @@
+groq>=0.9.0          # Official Groq Python SDK
+pandas>=2.0.0         # CSV loading and data validation
+python-dotenv>=1.0.0  # Load GROQ_API_KEY from .env
+tabulate>=0.9.0       # Pretty console output table
+pytest>=7.0.0         # Unit testing
+Flask>=2.0.0          # Web API and static file serving
+gunicorn>=21.0.0      # Production WSGI server
