@@ -139,7 +139,7 @@ inventory-recommendation-tool/
 2. **Create a virtual environment:**
    ```bash
    python3 -m venv venv
-   source venv/bin/activate        # Windows: .\venv\Scripts\activate
+   source venv/bin/activate        # Windows: .c
    ```
 
 3. **Install dependencies:**
@@ -165,6 +165,45 @@ inventory-recommendation-tool/
 If you don't have a Groq key yet, or just want to test the deterministic
 logic, add `--no-ai` to any command and the AI call is skipped entirely in
 favor of a template reason string.
+
+### Windows Setup
+
+```powershell
+# Create and activate virtual environment
+py -m venv venv
+.\venv\Scripts\Activate.ps1
+
+# If activation is blocked, run this first:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv\Scripts\Activate.ps1
+
+# Install dependencies
+python -m pip install -r requirements.txt
+
+# Create .env file
+Copy-Item .env.example .env
+```
+
+Add your Groq key to `.env`:
+
+```env
+GROQ_API_KEY=your_key_here
+```
+
+Run without an API key:
+
+```powershell
+python main.py --event "JCK Vegas" --no-ai
+```
+
+Run the web interface:
+
+```powershell
+python web.py
+```
+
+Open `http://127.0.0.1:5000`.
+
 
 ---
 
